@@ -1,0 +1,205 @@
+#NEXUS
+[R-package APE, Mon Mar 14 22:43:10 2016]
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 96;
+	TAXLABELS
+		Quercus_rubra_MA_16
+		Quercus_rubra_MA_17
+		Quercus_rubra_MA_20
+		Quercus_rubra_MA_21
+		Quercus_rubra_MA_23
+		Viburnum_lantanoides_MA_03
+		Viburnum_lantanoides_MA_09
+		Viburnum_lantanoides_MA_10
+		Viburnum_lantanoides_MA_11
+		Viburnum_lantanoides_MA_12
+		Acer_pensylvanicum_MA_01
+		Acer_pensylvanicum_MA_02
+		Acer_pensylvanicum_MA_03
+		Acer_pensylvanicum_MA_04
+		Acer_pensylvanicum_MA_11
+		Vaccinium_myrtilloides_MA_01
+		Vaccinium_myrtilloides_MA_02
+		Vaccinium_myrtilloides_MA_05
+		Vaccinium_myrtilloides_MA_07
+		Vaccinium_myrtilloides_MA_10
+		Alnus_incana_MA_02
+		Alnus_incana_MA_04
+		Alnus_incana_MA_05
+		Alnus_incana_MA_08
+		Alnus_incana_MA_09
+		Spiraea_alba_MA_02
+		Spiraea_alba_MA_03
+		Spiraea_alba_MA_04
+		Spiraea_alba_MA_06
+		Spiraea_alba_MA_08
+		Lonicera_canadensis_MA_01
+		Lonicera_canadensis_MA_04
+		Lonicera_canadensis_MA_05
+		Prunus_pensylvanica_MA_03
+		Prunus_pensylvanica_MA_04
+		Prunus_pensylvanica_MA_05
+		Prunus_pensylvanica_MA_07
+		Prunus_pensylvanica_MA_12
+		Fagus_grandifolia_MA_03
+		Fagus_grandifolia_MA_10
+		Fagus_grandifolia_MA_11
+		Fagus_grandifolia_MA_13
+		Fagus_grandifolia_MA_14
+		Populus_grandidentata_MA_02
+		Populus_grandidentata_MA_03
+		Populus_grandidentata_MA_05
+		Populus_grandidentata_MA_06
+		Populus_grandidentata_MA_07
+		Quercus_rubra_QC_04
+		Quercus_rubra_QC_05
+		Quercus_rubra_QC_06
+		Quercus_rubra_QC_07
+		Quercus_rubra_QC_08
+		Viburnum_lantanoides_QC_02
+		Viburnum_lantanoides_QC_04
+		Viburnum_lantanoides_QC_05
+		Viburnum_lantanoides_QC_06
+		Viburnum_lantanoides_QC_07
+		Acer_pensylvanicum_QC_04
+		Acer_pensylvanicum_QC_06
+		Acer_pensylvanicum_QC_07
+		Acer_pensylvanicum_QC_08
+		Acer_pensylvanicum_QC_09
+		Vaccinium_myrtilloides_QC_02
+		Vaccinium_myrtilloides_QC_03
+		Vaccinium_myrtilloides_QC_04
+		Vaccinium_myrtilloides_QC_05
+		Vaccinium_myrtilloides_QC_08
+		Alnus_incana_QC_01
+		Alnus_incana_QC_04
+		Alnus_incana_QC_05
+		Alnus_incana_QC_06
+		Alnus_incana_QC_07
+		Spiraea_alba_QC_01
+		Spiraea_alba_QC_02
+		Spiraea_alba_QC_03
+		Spiraea_alba_QC_04
+		Spiraea_alba_QC_06
+		Lonicera_canadensis_QC_01
+		Lonicera_canadensis_QC_02
+		Lonicera_canadensis_QC_04
+		Prunus_pensylvanica_QC_02
+		Prunus_pensylvanica_QC_03
+		Prunus_pensylvanica_QC_04
+		Prunus_pensylvanica_QC_06
+		Prunus_pensylvanica_QC_09
+		Fagus_grandifolia_QC_02
+		Fagus_grandifolia_QC_04
+		Fagus_grandifolia_QC_05
+		Fagus_grandifolia_QC_06
+		Fagus_grandifolia_QC_07
+		Populus_grandidentata_QC_01
+		Populus_grandidentata_QC_04
+		Populus_grandidentata_QC_05
+		Populus_grandidentata_QC_06
+		Populus_grandidentata_QC_08
+	;
+END;
+BEGIN TREES;
+	TRANSLATE
+		1	Quercus_rubra_MA_16,
+		2	Quercus_rubra_MA_17,
+		3	Quercus_rubra_MA_20,
+		4	Quercus_rubra_MA_21,
+		5	Quercus_rubra_MA_23,
+		6	Viburnum_lantanoides_MA_03,
+		7	Viburnum_lantanoides_MA_09,
+		8	Viburnum_lantanoides_MA_10,
+		9	Viburnum_lantanoides_MA_11,
+		10	Viburnum_lantanoides_MA_12,
+		11	Acer_pensylvanicum_MA_01,
+		12	Acer_pensylvanicum_MA_02,
+		13	Acer_pensylvanicum_MA_03,
+		14	Acer_pensylvanicum_MA_04,
+		15	Acer_pensylvanicum_MA_11,
+		16	Vaccinium_myrtilloides_MA_01,
+		17	Vaccinium_myrtilloides_MA_02,
+		18	Vaccinium_myrtilloides_MA_05,
+		19	Vaccinium_myrtilloides_MA_07,
+		20	Vaccinium_myrtilloides_MA_10,
+		21	Alnus_incana_MA_02,
+		22	Alnus_incana_MA_04,
+		23	Alnus_incana_MA_05,
+		24	Alnus_incana_MA_08,
+		25	Alnus_incana_MA_09,
+		26	Spiraea_alba_MA_02,
+		27	Spiraea_alba_MA_03,
+		28	Spiraea_alba_MA_04,
+		29	Spiraea_alba_MA_06,
+		30	Spiraea_alba_MA_08,
+		31	Lonicera_canadensis_MA_01,
+		32	Lonicera_canadensis_MA_04,
+		33	Lonicera_canadensis_MA_05,
+		34	Prunus_pensylvanica_MA_03,
+		35	Prunus_pensylvanica_MA_04,
+		36	Prunus_pensylvanica_MA_05,
+		37	Prunus_pensylvanica_MA_07,
+		38	Prunus_pensylvanica_MA_12,
+		39	Fagus_grandifolia_MA_03,
+		40	Fagus_grandifolia_MA_10,
+		41	Fagus_grandifolia_MA_11,
+		42	Fagus_grandifolia_MA_13,
+		43	Fagus_grandifolia_MA_14,
+		44	Populus_grandidentata_MA_02,
+		45	Populus_grandidentata_MA_03,
+		46	Populus_grandidentata_MA_05,
+		47	Populus_grandidentata_MA_06,
+		48	Populus_grandidentata_MA_07,
+		49	Quercus_rubra_QC_04,
+		50	Quercus_rubra_QC_05,
+		51	Quercus_rubra_QC_06,
+		52	Quercus_rubra_QC_07,
+		53	Quercus_rubra_QC_08,
+		54	Viburnum_lantanoides_QC_02,
+		55	Viburnum_lantanoides_QC_04,
+		56	Viburnum_lantanoides_QC_05,
+		57	Viburnum_lantanoides_QC_06,
+		58	Viburnum_lantanoides_QC_07,
+		59	Acer_pensylvanicum_QC_04,
+		60	Acer_pensylvanicum_QC_06,
+		61	Acer_pensylvanicum_QC_07,
+		62	Acer_pensylvanicum_QC_08,
+		63	Acer_pensylvanicum_QC_09,
+		64	Vaccinium_myrtilloides_QC_02,
+		65	Vaccinium_myrtilloides_QC_03,
+		66	Vaccinium_myrtilloides_QC_04,
+		67	Vaccinium_myrtilloides_QC_05,
+		68	Vaccinium_myrtilloides_QC_08,
+		69	Alnus_incana_QC_01,
+		70	Alnus_incana_QC_04,
+		71	Alnus_incana_QC_05,
+		72	Alnus_incana_QC_06,
+		73	Alnus_incana_QC_07,
+		74	Spiraea_alba_QC_01,
+		75	Spiraea_alba_QC_02,
+		76	Spiraea_alba_QC_03,
+		77	Spiraea_alba_QC_04,
+		78	Spiraea_alba_QC_06,
+		79	Lonicera_canadensis_QC_01,
+		80	Lonicera_canadensis_QC_02,
+		81	Lonicera_canadensis_QC_04,
+		82	Prunus_pensylvanica_QC_02,
+		83	Prunus_pensylvanica_QC_03,
+		84	Prunus_pensylvanica_QC_04,
+		85	Prunus_pensylvanica_QC_06,
+		86	Prunus_pensylvanica_QC_09,
+		87	Fagus_grandifolia_QC_02,
+		88	Fagus_grandifolia_QC_04,
+		89	Fagus_grandifolia_QC_05,
+		90	Fagus_grandifolia_QC_06,
+		91	Fagus_grandifolia_QC_07,
+		92	Populus_grandidentata_QC_01,
+		93	Populus_grandidentata_QC_04,
+		94	Populus_grandidentata_QC_05,
+		95	Populus_grandidentata_QC_06,
+		96	Populus_grandidentata_QC_08
+	;
+	TREE * UNTITLED = [&R] (((((((((((16:0,17:0):-9.550305588e-18,18:9.550305588e-18):-9.654113258e-18,19:9.654113258e-18):-9.760202414e-18,20:9.760202414e-18):-9.868649108e-18,64:9.868649108e-18):-9.979532806e-18,65:9.979532806e-18):-1.009293659e-17,66:1.009293659e-17):-1.020894735e-17,67:1.020894735e-17):-1.032765604e-17,68:1.032765604e-17):0.07677486466,((((((((((54:0,55:0):2.912060392e-17,56:-2.912060392e-17):2.960594732e-17,57:-2.960594732e-17):3.010774304e-17,58:-3.010774304e-17):4.594026309e-17,6:-4.594026309e-17):4.674623262e-17,7:-4.674623262e-17):4.758098677e-17,8:-4.758098677e-17):4.844609562e-17,9:-4.844609562e-17):4.934324554e-17,10:-4.934324554e-17):0.02763383214,(((((31:0,32:0):0,33:0):0,79:0):0,80:0):0,81:0):0.0340024773):0.01790942705):0.01679326085,(((((((((((((53:0,52:0):0,51:0):0,50:0):0,49:0):0,5:0):0,4:0):0,3:0):0,(1:0,2:0):-1.734723476e-18):0.02824854464,(((((((((39:0,40:0):0,41:0):0,42:0):0,43:0):0,87:0):0,88:0):0,89:0):0,90:0):0,91:0):0.02890102522):0.004572830644,(((((((((21:0,22:0):3.965082231e-18,23:-3.965082231e-18):4.111937128e-18,24:-4.111937128e-18):4.270088556e-18,25:-4.270088556e-18):4.440892099e-18,69:-4.440892099e-18):4.625929269e-18,70:-4.625929269e-18):4.827056629e-18,71:-4.827056629e-18):5.046468294e-18,72:-5.046468294e-18):5.286776308e-18,73:-5.286776308e-18):0.02937669284):0.02218975028,((((((((((82:0,83:0):0,84:0):0,85:0):0,86:0):1.752983723e-17,34:-1.752983723e-17):1.800361662e-17,35:-1.800361662e-17):1.850371708e-17,36:-1.850371708e-17):1.903239471e-17,37:-1.903239471e-17):1.959217102e-17,38:-1.959217102e-17):0.02094347617,(((((((((26:0,27:0):0,28:0):0,29:0):0,30:0):0,74:0):0,75:0):0,76:0):0,77:0):0,78:0):0.02477346231):0.03474982145):0.004817139812,(((((((((44:0,45:0):-1.057355262e-17,46:1.057355262e-17):-1.070094482e-17,47:1.070094482e-17):-1.083144414e-17,48:1.083144414e-17):0,92:0):0,93:0):0,94:0):0,95:0):0,96:0):0.07924590117):0.005736746303,(((((62:0,63:0):0,(60:0,61:0):0):0,(15:0,59:0):0):0,(13:0,14:0):0):0,(11:0,12:0):0):0.07564256156):0.008585478036);
+END;
