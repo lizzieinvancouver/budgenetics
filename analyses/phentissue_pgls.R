@@ -12,10 +12,12 @@ setwd("~/Documents/git/projects/treegarden/genetics/analyses")
 
 if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
 
+## source
+source("duplicate.tips.R")
+
 ## libraries
 library(ape)
 library(caper)
-
 
 alldater <- read.csv("output/indforGBS.csv", header=TRUE)
 dater <- read.csv("output/budsummary.csv", header=TRUE) # see phentissue.R for where this file is created
@@ -34,10 +36,10 @@ mytree$tip.label[which(!mytree$tip.label %in% treat20$jolyid)]
 
 # and check what's missing when you consider all treatments
 
-mytree$tip.label[which(!mytree$tip.label %in% alldater$jolyid)]
+mytree$tip.label[which(!mytree$tip.label %in% alldater$ind)]
 
 # same, just checking
-( tissue.no.exp <- data.frame(id = mytree$tip.label[is.na(match(mytree$tip.label, alldater$jolyid))]) )
+(tissue.no.exp <- data.frame(id = mytree$tip.label[is.na(match(mytree$tip.label, alldater$ind))]) )
 
 notes <- c(
   "Tissue individual, but not enough material, no terminal bud. Replaced with another one.",  # vacmyr02_HF, from common garden individuals google doc
@@ -51,9 +53,10 @@ notes <- c(
   "Could not find in Winter 15, replaced the a new one")
 
 tissue.no.exp <- data.frame(tissue.no.exp, notes)
+write.csv(tissue.no.exp, "output/tissue.no.expnotes.csv", row.names=FALSE)
 
 # data.frame(dx$id[grep("POPGRA02_HF", dx$id)]) # present in dx dataframe, now fixed manually. 
 
-compdat <- comparative.data(mytree, treat20.sm, jolyid) ## hmm, can't run with multiple values per species ....
+compdat <- comparative.data(mytree, treat20.sm, ind) ## hmm, can't run with multiple values per species ....
 
 # randomize data within species
