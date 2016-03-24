@@ -9,8 +9,12 @@ options(stringsAsFactors = FALSE)
 
 ## libraries
 library(plyr)
+library(dplyr)
 
 setwd("~/Documents/git/projects/treegarden/budburstexp2015/analyses")
+
+if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/buds/analyses") }
+
 
 # get latest data
 print(toload <- sort(dir("./input")[grep("Budburst Data", dir('./input'))], T)[1])
@@ -18,8 +22,6 @@ print(toload <- sort(dir("./input")[grep("Budburst Data", dir('./input'))], T)[1
 load(file.path("input", toload))
 
 source("source/simpleplot.R")
-
-dx <- dx[!is.na(dx$site),] # one Betpap entry has no site, need to check
 
 # Analysis of where the leafout cuttings were
 lx <- dx[dx$nl == 1,]
@@ -29,6 +31,7 @@ summary(lx)
 ##
 setwd("~/Documents/git/projects/treegarden/genetics/analyses")
 
+if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
 
 ## get the tissue individuals
 hftissue <- read.csv("input/HF_TISSUE_data - Tissue individuals, HF.csv", header=TRUE)
@@ -37,7 +40,10 @@ shtissue <- read.csv("input/St.Hip_TISSUE_data - Tissue individuals.csv", header
 hftissvector <- paste(hftissue$Individual, "HF", sep="_")
 shtissvector <- paste(shtissue$Individual, "SH", sep="_")
 
-tissues <- c(hftissvector, shtissvector)
+# Manually adding in POPGRA02_HF, not in HF_TISSUE_data sheet for some reason
+
+
+tissues <- c(hftissvector, shtissvector, "POPGRA02_HF")
 
 budtiss <- dx[which(dx$ind %in% tissues),]
 
@@ -104,3 +110,6 @@ siteffects.out <- data.frame(spp=unique(budtiss$sp), siteeffect=siteffects)
 write.csv(budtiss, "output/indforGBS.csv", row.names=FALSE)
 write.csv(budsummary, "output/budsummary.csv", row.names=FALSE)
 write.csv(siteffects.out, "output/siteffects.csv", row.names=FALSE)
+
+
+
