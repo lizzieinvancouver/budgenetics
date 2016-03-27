@@ -2,7 +2,9 @@
 ### By Lizzie ### 
 
 ## Happy pi day! ##
-## Quick look at distance genotypes and budburst data ## 
+## Quick look at distance genotypes and budburst data ##
+
+## Last updated on 26 March 2016: Got the PGLS to run but probably need to think of better analysis ##
 
 ## housekeeping
 rm(list=ls()) 
@@ -16,7 +18,6 @@ if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/anal
 source("duplicate.tips.R")
 
 ## libraries
-library(ape)
 library(caper)
 
 alldater <- read.csv("output/indforGBS.csv", header=TRUE)
@@ -55,8 +56,56 @@ notes <- c(
 tissue.no.exp <- data.frame(tissue.no.exp, notes)
 write.csv(tissue.no.exp, "output/tissue.no.expnotes.csv", row.names=FALSE)
 
-# data.frame(dx$id[grep("POPGRA02_HF", dx$id)]) # present in dx dataframe, now fixed manually. 
 
-compdat <- comparative.data(mytree, treat20.sm, ind) ## hmm, can't run with multiple values per species ....
+# subset the data and duplicate tips
+daterch0 <- subset(alldater, chill=="chill0")
+daterch0$indX <- paste(daterch0$ind, rep(1:4, 102), sep="")
+daterch0sm <- subset(daterch0, select=c("site", "sp", "ind", "treatcode", "warm",
+    "photo", "lday", "indX"))
+
+mytree.dup <- duplicate.tips.jd(mytree, 4, sep.char="")
+
+# now try to run PGLS
+compdat <- comparative.data(mytree.dup, daterch0sm, indX) 
+pgls(lday~warm*photo, lambda="ML", data=compdat)
+
+# why won't it run? Zero branch lengths....
+# cheap trick: make all branch lengths 1
+whee <- mytree.dup
+whee$edge.length <- rep(1, length(whee$edge.length))
+compdat.whee <-  comparative.data(whee, daterch0sm, indX) 
+mod1 <- pgls(lday~warm*photo, lambda="ML", data=compdat.whee)
+
+# better idea ...
+# resolve tree and set min branch length to depth of tree/1000
+whee2 <- multi2di(mytree.dup)
+whee2$edge.length[whee2$edge.length==0] <- max(cophenetic(whee))/2000
+compdat2 <- comparative.data(whee2, daterch0sm, indX)
+mod2 <- pgls(lday~warm*photo, lambda="ML", data=compdat2)
+summary(mod2)
 
 # randomize data within species
+randat <- c()
+sphere <- unique(daterch0sm$sp)
+for (species in c(1:length(sphere))) {
+    subby <- subset(daterch0sm, sp==sphere[species])
+    randat <- c(randat, sample(subby$indX, length(subby$indX)))
+}
+
+daterch0sm$randind <- randat
+
+# arghh! why on earth is caper dropping more rows (and 2 ind)
+# in compat2 vs. compdat3 ??
+compdat2 <- comparative.data(whee2, daterch0sm, indX) 
+compdat3 <- comparative.data(whee2, daterch0sm, randind)
+
+compdat2$data$ind[which(!unique(!compdat3$data$ind)
+    %in% unique(compdat2$data$ind))]
+length(compdat3$dropped$unmatched.rows)
+length(compdat2$dropped$unmatched.rows)
+
+# not useful yet but here's the randomized tips model
+# JD pointed out since the treatments produce big effects
+# we're forcing a ton of evolution at the tips ....
+mod2rand <- pgls(lday~warm*photo, lambda="ML", data=compdat3)
+summary(mod2rand)
