@@ -79,7 +79,7 @@ mod1 <- pgls(lday~warm*photo, lambda="ML", data=compdat.whee)
 # better idea ...
 # resolve tree and set min branch length to depth of tree/1000
 whee2 <- multi2di(mytree.dup)
-whee2$edge.length[whee2$edge.length==0] <- max(cophenetic(whee))/2000
+whee2$edge.length[whee2$edge.length==0] <- max(cophenetic(whee2))/2000
 compdat2 <- comparative.data(whee2, daterch0sm, indX)
 mod2 <- pgls(lday~warm*photo, lambda="ML", data=compdat2)
 summary(mod2)
