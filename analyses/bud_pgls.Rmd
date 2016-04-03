@@ -1,0 +1,154 @@
+---
+title: "Bud genetics"
+author: "Simon Joly"
+date: ''
+output:
+  html_document:
+    highlight: default
+    theme: united
+    toc: no
+    toc_depth: 3
+  pdf_document:
+    highlight: tango
+    toc: no
+    toc_depth: 3
+---
+
+# Set working directory
+
+```{r,eval=FALSE}
+setwd("~/Documents/github/budgenetics/analyses")
+```
+
+# Load packages and functions
+
+```{r "load_packages", warning=FALSE, message=FALSE}
+library(nlme)
+require(ape)
+require(caper)
+require(phytools)
+require(picante)
+source("duplicate.tips.R")
+```
+
+# Load data
+
+```{r "Load_data"}
+dater <- read.csv("./output/budsummary.csv")
+alldater <- read.csv("./output/indforGBS.csv")
+mytree <- read.nexus("./input/tree_intra.tre")
+mytree0 <- read.nexus("./input/tree_nointra.tre")
+```
+
+# Prepare data
+
+This part is identical to yours.
+
+```{r}
+# Subset the data and duplicate tips
+daterch0 <- subset(alldater, chill=="chill0", select=c("site", "sp", "ind", 
+                                                         "treatcode", "warm", "photo", 
+                                                         "lday"))
+daterch0$indX <- paste(daterch0$ind, rep(1:4, 102), sep="")
+rownames(daterch0) <- daterch0$indX
+
+# Duplicate tips
+mytree.dup <- duplicate.tips(mytree, 4, sep.char="")
+mytree0.dup <- duplicate.tips(mytree0, 4, sep.char="")
+
+# Resolve tree and set min branch length to depth of tree/2000
+mytree.dup.di <- multi2di(mytree.dup)
+mytree.dup.di$edge.length[mytree.dup.di$edge.length==0] <- 
+  max(cophenetic(mytree.dup.di))/2000
+mytree0.dup.di <- multi2di(mytree0.dup)
+mytree0.dup.di$edge.length[mytree0.dup.di$edge.length==0] <- 
+  max(cophenetic(mytree0.dup.di))/2000
+```
+
+```{r "Clean_up"}
+# It is a good idea to clean up the tree and dataset to keep
+# only the samples present in both
+toremove1 <- rownames(daterch0)[!(rownames(daterch0) %in% mytree.dup.di$tip.label)]
+toremove2 <- mytree.dup.di$tip.label[!(mytree.dup.di$tip.label %in% rownames(daterch0))]
+toremove <- c(toremove1,toremove2)
+thetree <- ape::drop.tip(mytree.dup.di,toremove)
+thetree0 <- ape::drop.tip(mytree0.dup.di,toremove)
+
+# Clean the data. Note that there are still NA in the table
+thedata <- daterch0[thetree$tip.label,]
+```
+
+Now, to facilitate the comparisons, convert the predictor to factors (binary variables).
+
+```{r}
+thedata$photo <- as.factor(thedata$photo)
+thedata$warm <- as.factor(thedata$warm)
+compdat <- comparative.data(thetree, thedata, indX)
+compdat0 <- comparative.data(thetree0, thedata, indX)
+```
+
+# run the PGLS
+
+I first run the PGLS with the tree with the intra-specific branch lengths
+
+```{r}
+mod <- pgls(lday~warm*photo+site, lambda="ML", data=compdat)
+summary(mod)
+```
+
+Let's compare with the analysis with the tree with no intra-specific branch lengths
+
+```{r}
+# With no intra-specific branch lengths
+mod0 <- pgls(lday~warm*photo+site, lambda="ML", data=compdat0)
+summary(mod0)
+```
+
+There are virtually no differences between the two analyses. However, note that the site effect, although not significant, is twice as important with the analysis with the intraspecific distances.
+
+For the sake of comparison, let's compare with a standard regression.
+
+```{r}
+mod.lm <- lm(lday~warm*photo+site, data=thedata)
+summary(mod.lm)
+```
+
+Interestingly, the result with the OLS is not very distinct from the PGLS. This suggests that the phylogeny as little to do for this dataset. This might be surprising as the estimated lambda in the PGLS is rather large (0.9). However, note that the interaction is not significant anymore.
+
+
+# Randomize individuals within species
+
+Here, I modified slighlty your script to resample the individuals instead of the replicates. It seems to make more sense to me. Also, not sure why, but it seems that by initially cleaning the data and tree, then the number of observations retained in the comparative data table is the same after resampling as with the original data (not sure I can explain why though!).
+
+```{r}
+# randomize data within species - do this by changing the factor names
+randat <- thedata[-c(1:nrow(thedata)),]
+randat$randind <- character()
+sphere <- unique(thedata$sp)
+for (species in c(1:length(sphere))) {
+  temp <- subset(thedata, sp==sphere[species])
+  ind <- as.factor(as.vector(temp$ind))
+  levels(ind) <- sample(levels(ind),length(levels(ind)))
+  temp$randind <- ind
+  randat <- rbind(randat, temp)
+}
+randat$randindX <- as.factor(paste(randat$randind, rep(1:4, 87), sep=""))
+# PGLS in caper
+compdatrand <- comparative.data(thetree, randat, randindX)
+mod.rand <- pgls(lday~warm*photo, lambda="ML", data=compdatrand)
+summary(mod.rand)
+```
+
+# Other approach
+
+This is an idea I got to compare the phylogenetic signal between the two trees for the residuals of the standard OLS. 
+
+```{r "phylosignal"}
+residuals <- mod.lm$residuals[thetree$tip.label]
+# With intraspecific branch lengths
+phylosignal(residuals,thetree)
+# Without intraspecific branch lengths
+phylosignal(residuals,thetree0)
+```
+
+Interestingly, the phylogenetic signal is slightly higher when using the tree with intraspecific branch lengths.
