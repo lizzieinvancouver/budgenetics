@@ -1,0 +1,281 @@
+%%% start preambling . . .  %%%
+\documentclass{article}
+
+% required 
+\usepackage{Sweave}
+\usepackage{graphicx}
+
+% recommended! Uncomment the below line and change the path for your computer!
+% \SweaveOpts{prefix.string=/Users/Lizzie/Documents/git/demoSweave/figures/demoFig, eps=F} 
+%put your figures in one place! Also, note that here 'figures' is the folder and 'demoFig' is what each 
+% figure produced will be titled plus its number or label (e.g., demoFig-nqpbetter.pdf')
+% make your captioning look better
+\usepackage[small]{caption}
+\setlength{\captionmargin}{30pt}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\belowcaptionskip}{10pt}
+
+% optional: muck with spacing
+\topmargin -1.5cm        
+\oddsidemargin 0.5cm   
+\evensidemargin 0.5cm  % same as oddsidemargin but for left-hand pages
+\textwidth 15.59cm
+\textheight 21.94cm 
+% \renewcommand{\baselinestretch}{1.5} % 1.5 lines between lines
+\parindent 0pt		  % sets leading space for paragraphs
+% optional: cute, fancy headers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[LO]{April 2016}
+\fancyhead[RO]{Intraspecific variation}
+% more optionals! %
+\usepackage[hyphens]{url} % this wraps my URL versus letting it spill across the page, a bad habit LaTeX has
+
+%%% end preambling. %%%
+
+\begin{document}
+\title{Importance of individual to phenological responses \\ of individuals in tissue analysis}
+% \author{Lizzie Wolkovich}
+\date{\today}
+\maketitle 
+
+\section{Startup}
+
+First off, grab the two main libraries for mixed-effects models in \verb|R| and the experimental data.
+\begin{Schunk}
+\begin{Sinput}
+> options(stringsAsFactors = FALSE)
+> setwd("~/Documents/git/projects/treegarden/genetics/analyses")
+> library(nlme)
+> library(lme4)
+> alldater <- read.csv("output/indforGBS.csv", header=TRUE)
+\end{Sinput}
+\end{Schunk}
+
+Since not all individuals received the three chilling treatments, subset to only the no-additional-chilling treatment (which all individuals were in). 
+\begin{Schunk}
+\begin{Sinput}
+> daterch0 <- subset(alldater, chill=="chill0")
+\end{Sinput}
+\end{Schunk}
+
+\section{With nlme}
+
+Fit two basic mixed-effects models, one considering \verb|site| and one considering \verb|individual| as the varying random effect; note that both include \verb|species| as an additional random effect. 
+\begin{Schunk}
+\begin{Sinput}
+> lme.mod.sp.ind <- lme(lday~warm*photo, random = list(ind=~1, sp=~1), data=daterch0, 
++     na.action=na.exclude)
+> lme.mod.sp.site <- lme(lday~warm*photo, random = list(site=~1, sp=~1), data=daterch0, 
++     na.action=na.exclude)
+\end{Sinput}
+\end{Schunk}
+
+Now look at the output of the models. We see that with individual in the model we get mildly stronger photoperiod and temperature and interaction effects.
+\begin{Schunk}
+\begin{Sinput}
+> summary(lme.mod.sp.ind)
+\end{Sinput}
+\begin{Soutput}
+Linear mixed-effects model fit by REML
+ Data: daterch0 
+       AIC    BIC   logLik
+  2639.539 2666.3 -1312.77
+
+Random effects:
+ Formula: ~1 | ind
+        (Intercept)
+StdDev:    9.418006
+
+ Formula: ~1 | sp %in% ind
+        (Intercept) Residual
+StdDev:    9.418001 8.081702
+
+Fixed effects: lday ~ warm * photo 
+                Value Std.Error  DF   t-value p-value
+(Intercept) 181.21222 16.441506 242 11.021631   0e+00
+warm         -6.59709  0.923338 242 -7.144824   0e+00
+photo        -7.83998  1.590948 242 -4.927867   0e+00
+warm:photo    0.31988  0.089777 242  3.563047   4e-04
+ Correlation: 
+           (Intr) warm   photo 
+warm       -0.987              
+photo      -0.978  0.972       
+warm:photo  0.968 -0.981 -0.990
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-3.91013968 -0.58505260  0.02522124  0.54156647  2.65967148 
+
+Number of Observations: 342
+Number of Groups: 
+        ind sp %in% ind 
+         97          97 
+\end{Soutput}
+\begin{Sinput}
+> summary(lme.mod.sp.site)
+\end{Sinput}
+\begin{Soutput}
+Linear mixed-effects model fit by REML
+ Data: daterch0 
+       AIC      BIC    logLik
+  2563.461 2590.222 -1274.731
+
+Random effects:
+ Formula: ~1 | site
+        (Intercept)
+StdDev: 0.002405337
+
+ Formula: ~1 | sp %in% site
+        (Intercept) Residual
+StdDev:    13.17339 9.106168
+
+Fixed effects: lday ~ warm * photo 
+                Value Std.Error  DF   t-value p-value
+(Intercept) 177.03711 18.294051 319  9.677305   0.000
+warm         -6.45654  1.017946 319 -6.342718   0.000
+photo        -7.60251  1.755387 319 -4.330956   0.000
+warm:photo    0.30910  0.099122 319  3.118359   0.002
+ Correlation: 
+           (Intr) warm   photo 
+warm       -0.977              
+photo      -0.968  0.972       
+warm:photo  0.958 -0.981 -0.990
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-4.31574968 -0.58520426 -0.02882628  0.55103469  3.28243199 
+
+Number of Observations: 342
+Number of Groups: 
+        site sp %in% site 
+           2           20 
+\end{Soutput}
+\end{Schunk}
+
+\section{With lme4}
+
+The above models are run from package \verb|nlme| which does not easily allow crossed and nested random effects together. And crossed and nested random effects are what we have so let's try the most correct models using the \verb|lme4| package. Here we can look at the same design as the two models above plus a model with both  \verb|individual| and  \verb|site| (where \verb|individual| is nested within  \verb|site|, which is our design). 
+\begin{Schunk}
+\begin{Sinput}
+> mod.site.sp <- lmer(lday~warm*photo + (1|sp) + (1|site), data=daterch0, 
++     na.action=na.exclude)
+> mod.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|ind), data=daterch0, 
++     na.action=na.exclude)
+> mod.site.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|site/ind), data=daterch0, 
++     na.action=na.exclude)
+\end{Sinput}
+\end{Schunk}
+
+When we look at the summary of the models we see that \verb|site| explains so little that the models with \verb|individual|, whether nested within \verb|site| or not, are effectively identical.
+
+\begin{Schunk}
+\begin{Sinput}
+> summary(mod.site.sp) # site explains nada!
+\end{Sinput}
+\begin{Soutput}
+Linear mixed model fit by REML ['lmerMod']
+Formula: lday ~ warm * photo + (1 | sp) + (1 | site)
+   Data: daterch0
+
+REML criterion at convergence: 2525
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.5067 -0.5964  0.0029  0.5141  3.1119 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ sp       (Intercept) 177.8    13.334  
+ site     (Intercept)   0.0     0.000  
+ Residual              84.0     9.165  
+Number of obs: 342, groups:  sp, 10; site, 2
+
+Fixed effects:
+             Estimate Std. Error t value
+(Intercept) 175.00104   18.55168   9.433
+warm         -6.34310    1.01946  -6.222
+photo        -7.40886    1.75799  -4.214
+warm:photo    0.29867    0.09932   3.007
+
+Correlation of Fixed Effects:
+           (Intr) warm   photo 
+warm       -0.964              
+photo      -0.955  0.972       
+warm:photo  0.945 -0.981 -0.990
+\end{Soutput}
+\begin{Sinput}
+> # so the below models are identical (wow)
+> summary(mod.sp.ind)
+\end{Sinput}
+\begin{Soutput}
+Linear mixed model fit by REML ['lmerMod']
+Formula: lday ~ warm * photo + (1 | sp) + (1 | ind)
+   Data: daterch0
+
+REML criterion at convergence: 2505.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4827 -0.5881  0.0363  0.4778  2.9141 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ ind      (Intercept)  20.07    4.480  
+ sp       (Intercept) 175.04   13.230  
+ Residual              65.33    8.083  
+Number of obs: 342, groups:  ind, 97; sp, 10
+
+Fixed effects:
+             Estimate Std. Error t value
+(Intercept) 177.98778   16.68911  10.665
+warm         -6.48757    0.91067  -7.124
+photo        -7.66842    1.56977  -4.885
+warm:photo    0.31149    0.08864   3.514
+
+Correlation of Fixed Effects:
+           (Intr) warm   photo 
+warm       -0.958              
+photo      -0.949  0.972       
+warm:photo  0.939 -0.981 -0.990
+\end{Soutput}
+\begin{Sinput}
+> summary(mod.site.sp.ind)
+\end{Sinput}
+\begin{Soutput}
+Linear mixed model fit by REML ['lmerMod']
+Formula: lday ~ warm * photo + (1 | sp) + (1 | site/ind)
+   Data: daterch0
+
+REML criterion at convergence: 2505.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-4.4827 -0.5881  0.0363  0.4778  2.9141 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ ind:site (Intercept)  20.07    4.480  
+ sp       (Intercept) 175.04   13.230  
+ site     (Intercept)   0.00    0.000  
+ Residual              65.33    8.083  
+Number of obs: 342, groups:  ind:site, 97; sp, 10; site, 2
+
+Fixed effects:
+             Estimate Std. Error t value
+(Intercept) 177.98778   16.68911  10.665
+warm         -6.48757    0.91067  -7.124
+photo        -7.66842    1.56977  -4.885
+warm:photo    0.31149    0.08864   3.514
+
+Correlation of Fixed Effects:
+           (Intr) warm   photo 
+warm       -0.958              
+photo      -0.949  0.972       
+warm:photo  0.939 -0.981 -0.990
+\end{Soutput}
+\end{Schunk}
+
+So the good news is that individual matters some. If you look at the variance it's not so much compared to species but it seems a good amount, especially compared to site.
+
+\end{document}

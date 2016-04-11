@@ -1,0 +1,97 @@
+%%% start preambling . . .  %%%
+\documentclass{article}
+
+% required 
+\usepackage{Sweave}
+\usepackage{graphicx}
+
+% recommended! Uncomment the below line and change the path for your computer!
+% \SweaveOpts{prefix.string=/Users/Lizzie/Documents/git/demoSweave/figures/demoFig, eps=F} 
+%put your figures in one place! Also, note that here 'figures' is the folder and 'demoFig' is what each 
+% figure produced will be titled plus its number or label (e.g., demoFig-nqpbetter.pdf')
+% make your captioning look better
+\usepackage[small]{caption}
+\setlength{\captionmargin}{30pt}
+\setlength{\abovecaptionskip}{0pt}
+\setlength{\belowcaptionskip}{10pt}
+
+% optional: muck with spacing
+\topmargin -1.5cm        
+\oddsidemargin 0.5cm   
+\evensidemargin 0.5cm  % same as oddsidemargin but for left-hand pages
+\textwidth 15.59cm
+\textheight 21.94cm 
+% \renewcommand{\baselinestretch}{1.5} % 1.5 lines between lines
+\parindent 0pt		  % sets leading space for paragraphs
+% optional: cute, fancy headers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[LO]{April 2016}
+\fancyhead[RO]{Intraspecific variation}
+% more optionals! %
+\usepackage[hyphens]{url} % this wraps my URL versus letting it spill across the page, a bad habit LaTeX has
+
+%%% end preambling. %%%
+
+\begin{document}
+\title{Importance of individual to phenological responses \\ of individuals in tissue analysis}
+% \author{Lizzie Wolkovich}
+\date{\today}
+\maketitle 
+
+\section{Startup}
+
+First off, grab the two main libraries for mixed-effects models in \verb|R| and the experimental data.
+<<label=getbasics, echo=TRUE, results=hide>>=
+options(stringsAsFactors = FALSE)
+setwd("~/Documents/git/projects/treegarden/genetics/analyses")
+library(nlme)
+library(lme4)
+alldater <- read.csv("output/indforGBS.csv", header=TRUE)
+@
+
+Since not all individuals received the three chilling treatments, subset to only the no-additional-chilling treatment (which all individuals were in). 
+<<label=subsetdata, echo=TRUE, results=hide>>=
+daterch0 <- subset(alldater, chill=="chill0")
+@
+
+\section{With nlme}
+
+Fit two basic mixed-effects models, one considering \verb|site| and one considering \verb|individual| as the varying random effect; note that both include \verb|species| as an additional random effect. 
+<<label=runmodels, echo=TRUE, results=hide>>=
+lme.mod.sp.ind <- lme(lday~warm*photo, random = list(ind=~1, sp=~1), data=daterch0, 
+    na.action=na.exclude)
+lme.mod.sp.site <- lme(lday~warm*photo, random = list(site=~1, sp=~1), data=daterch0, 
+    na.action=na.exclude)
+@
+
+Now look at the output of the models. We see that with individual in the model we get mildly stronger photoperiod and temperature and interaction effects.
+<<label=lookatmodels, echo=TRUE>>=
+summary(lme.mod.sp.ind)
+summary(lme.mod.sp.site)
+@
+
+\section{With lme4}
+
+The above models are run from package \verb|nlme| which does not easily allow crossed and nested random effects together. And crossed and nested random effects are what we have so let's try the most correct models using the \verb|lme4| package. Here we can look at the same design as the two models above plus a model with both  \verb|individual| and  \verb|site| (where \verb|individual| is nested within  \verb|site|, which is our design). 
+<<label=lme4mods, echo=TRUE>>=
+mod.site.sp <- lmer(lday~warm*photo + (1|sp) + (1|site), data=daterch0, 
+    na.action=na.exclude)
+mod.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|ind), data=daterch0, 
+    na.action=na.exclude)
+mod.site.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|site/ind), data=daterch0, 
+    na.action=na.exclude)
+@
+
+When we look at the summary of the models we see that \verb|site| explains so little that the models with \verb|individual|, whether nested within \verb|site| or not, are effectively identical.
+
+<<label=lookatlme4, echo=TRUE>>=
+summary(mod.site.sp) # site explains nada!
+# so the below models are identical (wow)
+summary(mod.sp.ind)
+summary(mod.site.sp.ind)
+@
+
+So the good news is that individual matters some. If you look at the variance it's not so much compared to species but it seems a good amount, especially compared to site.
+
+\end{document}

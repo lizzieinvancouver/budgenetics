@@ -12,13 +12,17 @@ options(stringsAsFactors = FALSE)
 
 setwd("~/Documents/git/projects/treegarden/genetics/analyses")
 
-if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
+# if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
 
 ## source
 source("duplicate.tips.R")
 
 ## libraries
 library(caper)
+library(nlme)
+library(lme4)
+library(ape) # for varcomp for nlme
+# library(HLMdiag) # for varcomp for lme4, which is basically already in lme4 output
 
 alldater <- read.csv("output/indforGBS.csv", header=TRUE)
 dater <- read.csv("output/budsummary.csv", header=TRUE) # see phentissue.R for where this file is created
@@ -57,8 +61,48 @@ tissue.no.exp <- data.frame(tissue.no.exp, notes)
 write.csv(tissue.no.exp, "output/tissue.no.expnotes.csv", row.names=FALSE)
 
 
-# subset the data and duplicate tips
+# subset the data 
 daterch0 <- subset(alldater, chill=="chill0")
+
+##
+## fit simple mixed-effects models (ignoring the phylogeny)
+# with and without individual
+##
+
+# first I tried nlme package but with this we cannot have site/ind and sp crossed ...
+# so I just did models with site OR ind (and both with species)
+lme.mod.sp.ind <- lme(lday~warm*photo, random = list(ind=~1, sp=~1),
+    data=daterch0, na.action=na.exclude)
+lme.mod.sp.site <- lme(lday~warm*photo, random = list(site=~1, sp=~1),
+    data=daterch0, na.action=na.exclude)
+
+# interestingly the model comparisons show the model with site better
+# this is probably because of DF penalties
+anova(lme.mod.sp.ind, lme.mod.sp.site)
+
+# when you look at the varcomp though ...
+# the model with ind takes half the variance away from sp and gives it to ind
+varcomp(lme.mod.sp.site, scale=TRUE)
+varcomp(lme.mod.sp.ind, scale=TRUE) 
+
+# let's try lme4 to get the exact model I think we have
+mod.site.sp <- lmer(lday~warm*photo + (1|sp) + (1|site), data=daterch0,
+    na.action=na.exclude)
+mod.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|ind), data=daterch0,
+    na.action=na.exclude)
+mod.site.sp.ind <- lmer(lday~warm*photo + (1|sp) + (1|site/ind), data=daterch0,
+    na.action=na.exclude)
+
+summary(mod.site.sp) # site explains nada!
+# so the below models are identical (wow)
+summary(mod.sp.ind)
+summary(mod.site.sp.ind)
+
+varcomp.mer(mod.site.sp.ind)
+
+##
+## back to the phylogeny, get down the data needed and duplicate tips
+##
 daterch0$indX <- paste(daterch0$ind, rep(1:4, 102), sep="")
 daterch0sm <- subset(daterch0, select=c("site", "sp", "ind", "treatcode", "warm",
     "photo", "lday", "indX"))
