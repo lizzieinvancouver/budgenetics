@@ -4,7 +4,12 @@
 ## Happy pi day! ##
 ## Quick look at distance genotypes and budburst data ##
 
-## Last updated on 26 March 2016: Got the PGLS to run but probably need to think of better analysis ##
+## Last updated on 24 May 2016: Running the Bayes PGLS ##
+
+## To do ##
+# (1) Check the Bayes PGLS a little against caper PGLS more...
+# (2) Double check that the dropped data make sense
+## 
 
 ## housekeeping
 rm(list=ls()) 
@@ -138,11 +143,10 @@ for (species in c(1:length(sphere))) {
 
 daterch0sm$randind <- randat
 
-# arghh! why on earth is caper dropping more rows (and 2 ind)
-# in compat2 vs. compdat3 ??
 compdat2 <- comparative.data(whee2, daterch0sm, indX) 
 compdat3 <- comparative.data(whee2, daterch0sm, randind)
 
+# make sure compdat2 and compdat3 are the same length 
 compdat2$data$ind[which(!unique(!compdat3$data$ind)
     %in% unique(compdat2$data$ind))]
 length(compdat3$dropped$unmatched.rows)
@@ -153,3 +157,48 @@ length(compdat2$dropped$unmatched.rows)
 # we're forcing a ton of evolution at the tips ....
 mod2rand <- pgls(lday~warm*photo, lambda="ML", data=compdat3)
 summary(mod2rand)
+
+##
+## Bayes PGLS
+##
+
+library(rstan)
+library("shinystan")
+library(geiger) # for VCV build
+
+# doing it just for temp (not temp*photo) for now ...
+daterch0.warmonly <- subset(daterch0sm, photo==8)
+daterch0.warmonly.noNA <- subset(daterch0.warmonly, is.na(lday)==FALSE)
+
+whee3 <- drop.tip(whee2, whee2$tip.label[!whee2$tip.label %in% daterch0.warmonly.noNA$indX])
+
+vcv.whee3 <- vcv(whee3)
+vcv.whee3mat <- as.matrix(vcv.whee3)
+
+daterch0.warmonly.noNA.matched <- daterch0.warmonly.noNA[(
+    daterch0.warmonly.noNA$indX %in% whee3$tip.label),]
+
+# what is lost?
+daterch0.warmonly.noNA$indX[!daterch0.warmonly.noNA$indX 
+    %in% whee3$tip.label]
+# compdat3$dropped$unmatched.rows
+
+Lmat <- matrix(rep(1), nrow = nrow(vcv.whee3mat), ncol = ncol(vcv.whee3mat))
+diag(Lmat) <- 0
+
+## build up data for stan model
+N <- nrow(daterch0.warmonly.noNA.matched)
+X <- as.vector(daterch0.warmonly.noNA.matched$warm)
+K <- 1
+V <- vcv.whee3
+y <- as.vector(daterch0.warmonly.noNA.matched$lday)
+
+fit.bayes.pgls <- stan("stan/pgls_lemoine.stan", data=c("N","X", "K", "Lmat", "V", "y"), iter=2000, chains=4)
+launch_shinystan(fit.bayes.pgls)
+
+fit.bayes.pgls
+
+# compare with caper
+compdat.wonly <- comparative.data(whee3, daterch0.warmonly.noNA.matched, indX) 
+mod3 <- pgls(lday~warm, lambda="ML", data=compdat.wonly)
+summary(mod3)
