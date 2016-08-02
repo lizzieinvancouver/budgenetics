@@ -1,0 +1,268 @@
+---
+title: "Bud Genetics - Phylogenetic Mixed Effect Models"
+author: "Simon Joly"
+date: ''
+output:
+  html_document:
+    highlight: default
+    theme: united
+    toc: no
+    toc_depth: 3
+  pdf_document:
+    highlight: tango
+    toc: no
+    toc_depth: 3
+---
+
+# Set working directory
+
+```{r,eval=FALSE}
+setwd("~/Documents/github/budgenetics/analyses")
+```
+
+# Load packages and functions
+
+```{r "load_packages", warning=FALSE, message=FALSE}
+library(nlme)
+require(ape)
+require(caper)
+require(phytools)
+require(picante)
+source("duplicate.tips.R")
+```
+
+# Load data
+
+```{r "Load_data"}
+dater <- read.csv("./output/budsummary.csv")
+alldater <- read.csv("./output/indforGBS.csv")
+mytree <- read.nexus("./input/tree_intra.tre")
+mytree0 <- read.nexus("./input/tree_nointra.tre")
+```
+
+# Prepare data
+
+This part is identical to yours.
+
+```{r}
+# Subset the data and duplicate tips
+daterch0 <- subset(alldater, chill=="chill0", 
+                   select=c("site", "sp", "ind", "treatcode", 
+                            "warm", "photo", "lday"))
+daterch0$indX <- paste(daterch0$ind, rep(1:4, 102), sep="")
+rownames(daterch0) <- daterch0$indX
+
+# Duplicate tips
+mytree.dup <- duplicate.tips(mytree, 4, sep.char="")
+mytree0.dup <- duplicate.tips(mytree0, 4, sep.char="")
+
+# Resolve tree and set min branch length to depth of tree/2000
+mytree.dup.di <- multi2di(mytree.dup)
+mytree.dup.di$edge.length[mytree.dup.di$edge.length==0] <- 
+  max(cophenetic(mytree.dup.di))/2000
+mytree0.dup.di <- multi2di(mytree0.dup)
+mytree0.dup.di$edge.length[mytree0.dup.di$edge.length==0] <- 
+  max(cophenetic(mytree0.dup.di))/2000
+```
+
+```{r "Clean_up"}
+# It is a good idea to clean up the tree and dataset to keep
+# only the samples present in both
+toremove1 <- rownames(daterch0)[!(rownames(daterch0) %in% mytree.dup.di$tip.label)]
+toremove2 <- mytree.dup.di$tip.label[!(mytree.dup.di$tip.label %in% rownames(daterch0))]
+toremove <- c(toremove1,toremove2)
+thetree <- ape::drop.tip(mytree.dup.di,toremove)
+thetree0 <- ape::drop.tip(mytree0.dup.di,toremove)
+
+# Clean the data. Note that there are still NA in the table
+thedata <- daterch0[thetree$tip.label,]
+```
+
+Now, to facilitate the comparisons, convert the predictor to factors (binary variables).
+
+```{r}
+thedata$photo <- as.factor(thedata$photo)
+thedata$warm <- as.factor(thedata$warm)
+compdat <- comparative.data(thetree, thedata, indX)
+compdat0 <- comparative.data(thetree0, thedata, indX)
+```
+
+# Phylogenetic mixed effect models in `lme`
+
+The idea with this approach is to test the importance of potential random effects as well as the effect of a correlation structure using model testing.
+
+I use the approach of Zuur et al. for variable testing by starting with a full model and testing whether some variables could be dropped. The fixed part of the model is `lday~warm*photo+site`. I then include the species as a potential random factor in the model. And finally, I include a phylogenetic correlation structure in the model. Two phylogenetic structures are tested: one that includes genetic distances within individuals and one that does not.
+
+## Prepare the data
+
+Let's start by preparing the data to remove `NA` in order to avoid errors later. 
+
+```{r}
+#Remove NA values
+thedata2 <- na.omit(thedata)
+toremove3 <- thetree$tip.label[!(thetree$tip.label %in% rownames(thedata2))]
+thetree.2 <- ape::drop.tip(thetree,toremove3)
+thetree0.2 <- ape::drop.tip(thetree0,toremove3)
+```
+
+Now, let's prepare the formula for the fixed effects and correlation structures
+
+```{r}
+# Formula for mixed effects
+f1 <- formula(lday~warm*photo+site)
+
+# Correlation structures
+corr.phylo <- corBrownian(phy=thetree.2)
+corr.phylo0 <- corBrownian(phy=thetree0.2)
+
+# Estimate distance from root for each tip
+tip.heights <- diag(vcv.phylo(thetree.2))
+tip.heights0 <- diag(vcv.phylo(thetree0.2))
+```
+
+Note that a standard Brownian correlation structure was used for the phylogenetic correlation. We'll test other approaches below, such as estimating lambda. Also, the last part of the previous block estimated the distance from the root of the tree to each tip of the phylogeny. Apparently, if the trees you are using for the correlation structure are not ultrametric, then you need to include these tips heights as weights in the models.
+
+## Test the correlation strucutre.
+
+First, let's test the different correlation structures on the otherwise full model and compare them by AIC.
+
+```{r}
+#Test the two correlation structures for a full model
+gls.mod0 <- lme(f1,random = ~1 | sp, data=thedata2)
+gls.mod1 <- lme(f1,random = ~1 | sp, correlation = corr.phylo, weights= varFixed(~tip.heights), data=thedata2)
+gls.mod2 <- lme(f1,random = ~1 | sp, correlation = corr.phylo0, weights= varFixed(~tip.heights0), data=thedata2)
+AIC(gls.mod0,gls.mod1,gls.mod2)
+```
+
+A standard Brownian correlation structure was used for the phylogenetic gls. As mentionned above, the variance structure imposed with the `weights` option is necessary because the tree is not ultrametric.
+
+You can see that adding a phylogenetic correlation structure to the model greatly improves the model, even if the species are already included in the model as a random effect. Also, the species tree with *no branch length within species* has a better fit than the tree that includes intraspecific branch lengths.
+
+Therefore, we will keep the correlation structure without the intraspecific branch lengths for the next comparisons.
+
+## Testing the random factor.
+
+Now that we have chosen the proper correlation, let's test the random factor, the species.
+
+```{r}
+# Model without the random factor
+gls.mod3 <- gls(f1, correlation = corr.phylo0, weights= varFixed(~tip.heights0), data=thedata2)
+AIC(gls.mod2,gls.mod3)
+```
+
+You can see that the model is much better with the random factor included.
+
+## Test lambda
+
+Now that we know that the phylogeny is important, we can also try to optimise the $\lambda$ parameter that can scale the importance of the phylogeny in the analysis. This can be done using the `corPagel` correlation structure from `ape`.
+
+```{r}
+# Optimize lambda
+lambda <- seq(0, 1, length.out = 20)
+lik <- sapply(lambda, function(lambda) logLik(lme(f1, random = ~1 | sp,correlation = corPagel(value = lambda, phy = thetree0.2, fixed = TRUE),weights= varFixed(~tip.heights0),data = thedata2)))
+plot(lik ~ lambda, type = "l", main = expression(paste("Likelihood Plot for ", lambda)), ylab = "Log Likelihood", xlab = expression(lambda))
+lambda[lik == max(lik)]
+```
+
+The optimal $\lambda$ value appears to be 1.
+
+Interestingly, you can see that the optimal $\lambda$ value is different if there are no random species factor in the model:
+
+```{r}
+# Optimize lambda
+lik2 <- sapply(lambda, function(lambda) logLik(gls(f1, correlation = corPagel(value = lambda, phy = thetree0.2, fixed = TRUE),weights= varFixed(~tip.heights0), data = thedata2)))
+plot(lik2 ~ lambda, type = "l", main = expression(paste("Likelihood Plot for ", lambda)), ylab = "Log Likelihood", xlab = expression(lambda))
+lambda[lik2 == max(lik2)]
+```
+
+Now the best $\lambda$ value is approx. 0.63, although the likelihood surface is quite flat. Not sure exactly why it is the case, but this is probably because when the species factor is accounted for, this models the differences between species (intercept) and the correlation accounts for the phylogenetic relationships. But if there are no random factor, then the correlation structures try to account for both the species (intercept) effect and the evolutionary relationships.
+
+Anyway, with the random effect, we can keep the unmodified phylogeny ($\lambda=1$).
+
+## Fixed effects
+
+Let's now test the fixed effects. Again, we'll use a backward stepwise approach using the AIC criterion. On the first step, we can drop either the `site` or the `warm:photo` predictors.
+
+```{r}
+gls.mod4 <- lme(lday~warm*photo, random = ~1 | sp, correlation = corr.phylo0, weights= varFixed(~tip.heights0), data=thedata2)
+gls.mod5 <- lme(lday~warm+photo+site, random = ~1 | sp, correlation = corr.phylo0, weights= varFixed(~tip.heights0), data=thedata2)
+AIC(gls.mod2,gls.mod4,gls.mod5)
+```
+
+The model with all terms is the one with the best score. We thus keep this model for interpretation.
+
+## Best model
+
+Here is the summary of the best model.
+
+```{r}
+summary(gls.mod2)
+```
+
+## Residuals
+
+Let's also look at the residuals of the model from different angles
+
+```{r}
+plot(gls.mod2, resid(., type="n")~fitted(.), main="Normalized Residuals v Fitted Values",abline=c(0,0))
+res <- resid(gls.mod2, type="n")
+qqnorm(res)
+qqline(res)
+
+library(lattice)
+xyplot(resid(gls.mod2, type="n")~gls.mod2$data$warm|gls.mod2$data$photo,xlab="Warmimng treatment (temp)",ylab="Normalized residuals",main="Normalized residuals for the different treatments")
+
+xyplot(resid(gls.mod2, type="n")~fitted(gls.mod2)|thedata2$sp,
+       panel = function(x, y) {
+         panel.xyplot(x, y)
+         panel.abline(h=0,col="red")
+       }, main="Normalized Residuals vs. Fitted Values per Species")
+
+boxplot(resid(gls.mod2, type="n")~thedata2$sp,main="Normalized Residuals per Species")
+```
+
+It looks pretty good, despite a few outliers.
+
+We can compare with the residuals without accounting for the species (that is, without the random effects and without the phylogenetic correlation structure).
+
+```{r}
+gls.mod6 <- gls(f1, data=thedata2)
+plot(gls.mod6, resid(., type="n")~fitted(.), main="Normalized Residuals v Fitted Values",abline=c(0,0))
+res <- resid(gls.mod6, type="n")
+qqnorm(res)
+qqline(res)
+xyplot(resid(gls.mod6, type="n")~gls.mod2$data$warm|gls.mod2$data$photo,xlab="Warming treatment (temp)",ylab="Normalized residuals",main="Normalized residuals for the different treatments")
+xyplot(resid(gls.mod6, type="n")~fitted(gls.mod6)|thedata2$sp,
+       panel = function(x, y) {
+         panel.xyplot(x, y)
+         panel.abline(h=0,col="red")
+       },main="Normalized Residuals vs. Fitted Values per Species")
+boxplot(resid(gls.mod6, type="n")~thedata2$sp,main="Normalized Residuals per Species")
+```
+
+
+# Individuals as random factors
+
+```{r}
+#Test the two correlation structures for a full model
+gls.mod.ind0 <- lme(f1,random = list(ind=~1, sp=~1), data=thedata2)
+gls.mod.ind1 <- lme(f1,random = list(ind=~1, sp=~1), correlation = corr.phylo, weights= varFixed(~tip.heights), data=thedata2)
+gls.mod.ind2 <- lme(f1,random = list(ind=~1, sp=~1), correlation = corr.phylo0, weights= varFixed(~tip.heights0), data=thedata2)
+AIC(gls.mod0,gls.mod1,gls.mod2,gls.mod.ind0,gls.mod.ind1,gls.mod.ind2)
+```
+
+
+
+
+# Other approaches
+
+1) MCMCglmm package
+2) include non additive distances:
+
+```{r}
+# include non additive evol. distances 
+phylo.mat <- vcv(thetree.2, corr=TRUE)
+corr.phylo <- corSymm(phylo.mat[lower.tri(phylo.mat)],fixed=TRUE)
+```
+
+
