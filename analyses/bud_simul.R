@@ -61,7 +61,7 @@ for(i in 1:length(spetree$tip.label)){
   newtips <- paste(letters[i],seq(1,length(poptrees[[i]]$tip.label)),sep="")
   poptrees[[i]]$tip.label <- newtips
   #collapse branch lengths
-  poptrees[[i]]$edge.length <- rep(0,length.out=length(poptrees[[i]]$edge.length))
+  poptrees[[i]]$edge.length <- rep(0.0001,length.out=length(poptrees[[i]]$edge.length))
   tipname <- tips[i]
   tipnumber <- seq(1,length(combtree0$tip.label))[combtree0$tip.label==tipname]
   poptrees[[i]]$root.edge<-0
