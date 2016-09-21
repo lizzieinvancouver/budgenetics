@@ -11,6 +11,7 @@
 require(nlme)
 require(ape)
 require(phytools)
+require(geiger)
 
 
 # Phylogenetic simulations ------------------------------------------------
@@ -24,6 +25,9 @@ nindividuals=10
 # The total tree length is fixed to 1.
 species.scale=0.9 #Total
 infrasp.scale=1-species.scale
+# Pagel's lambda parameter, to give more or less importance to the
+# phylogenetic relationships
+lambda = 1.0
 
 ###
 # Simulate species tree
@@ -71,6 +75,11 @@ for(i in 1:length(spetree$tip.label)){
 combtree0$edge.length <- combtree0$edge.length/max(nodeHeights(combtree0)[,2])*1
 plot(combtree0,cex=0.5);add.scale.bar()
 
+###
+# Rescale trees
+
+combtree <- rescale(combtree,"lambda",lambda)
+combtree0 <- rescale(combtree0,"lambda",lambda)
 
 # Character simulations -------------------------------------------------
 
