@@ -206,7 +206,7 @@ launch_shinystan(fit.bayes.pgls)
 
 fit.bayes.pgls
 
-# compare with caper
-compdat.wonly <- comparative.data(whee3, daterch0.warmonly.noNA.matched, indX) 
-mod3 <- pgls(lday~warm, lambda="ML", data=compdat.wonly)
+# compare with caper ... definitely not getting the same answer.
+compdat.wonly <- comparative.data(whee3, daterch0.noNA.matched, indX) 
+mod3 <- pgls(lday~warm*photo, lambda="ML", data=compdat.wonly)
 summary(mod3)

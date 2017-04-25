@@ -21,7 +21,7 @@ transformed data{
 parameters{
 	real<lower=0> sigma;
 	real<lower=0, upper=1> lambda;
-	vector[4] B;
+	vector[3] B;
 }
 transformed parameters{
 }
