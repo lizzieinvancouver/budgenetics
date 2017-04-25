@@ -11,7 +11,7 @@ options(stringsAsFactors = FALSE)
 library(plyr)
 library(dplyr)
 
-setwd("~/Documents/git/projects/treegarden/budburstexp2015/analyses")
+setwd("~/Documents/git/projects/treegarden/budexperiments/analyses")
 
 if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/buds/analyses") }
 
@@ -29,7 +29,7 @@ lx <- dx[dx$nl == 1,]
 summary(lx)
 
 ##
-setwd("~/Documents/git/projects/treegarden/genetics/analyses")
+setwd("~/Documents/git/projects/treegarden/bud-genetics/analyses")
 
 if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
 
@@ -47,7 +47,7 @@ tissues <- c(hftissvector, shtissvector, "POPGRA02_HF")
 
 budtiss <- dx[which(dx$ind %in% tissues),]
 
-howmanychill <- aggregate(budtiss["bday"], budtiss[c("chill","sp" )], FUN=length) # ACEPEN, FAGGRA, POPGRA, QUERUB, VIBLAN also have full chilling
+howmanychill <- aggregate(budtiss["bday"], budtiss[c("chill","sp" )], FUN=length) # ACEPEN, FAGGRA, POPGRA, QUERUB, VIBLAN also have full chilling (so 5 species do and 5 species don't .... sigh)
 
 # do a little formatting to get names to match Simon's naming
 # my unname and lookup did not working, so doing it the hard way...

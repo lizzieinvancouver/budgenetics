@@ -15,7 +15,7 @@
 rm(list=ls()) 
 options(stringsAsFactors = FALSE)
 
-setwd("~/Documents/git/projects/treegarden/genetics/analyses")
+setwd("~/Documents/git/projects/treegarden/bud-genetics/analyses")
 
 # if(length(grep("danflynn", getwd()))>0){ setwd("~/Documents/git/budgenetics/analyses") }
 
@@ -61,6 +61,10 @@ notes <- c(
   "Could not find in Winter 15, replaced the a new one",
   "Could not find in Winter 15, replaced the a new one",
   "Could not find in Winter 15, replaced the a new one")
+
+# Additionally, from Dan on 17 Aug 2016:
+# PRUPEN03_HF: Dead :(
+# PRUPEN05_HF: Probably Prunus serotina, black cherry
 
 tissue.no.exp <- data.frame(tissue.no.exp, notes)
 write.csv(tissue.no.exp, "output/tissue.no.expnotes.csv", row.names=FALSE)
@@ -166,17 +170,16 @@ library(rstan)
 library("shinystan")
 library(geiger) # for VCV build
 
-# doing it just for temp (not temp*photo) for now ...
-daterch0.warmonly <- subset(daterch0sm, photo==8)
-daterch0.warmonly.noNA <- subset(daterch0.warmonly, is.na(lday)==FALSE)
+# doing it just for temp*photo for now ... could eventually switch to alldater and add in chill
+daterch0.noNA <- subset(daterch0sm, is.na(lday)==FALSE) 
 
-whee3 <- drop.tip(whee2, whee2$tip.label[!whee2$tip.label %in% daterch0.warmonly.noNA$indX])
+whee3 <- drop.tip(whee2, whee2$tip.label[!whee2$tip.label %in% daterch0.noNA$indX])
 
 vcv.whee3 <- vcv(whee3)
 vcv.whee3mat <- as.matrix(vcv.whee3)
 
-daterch0.warmonly.noNA.matched <- daterch0.warmonly.noNA[(
-    daterch0.warmonly.noNA$indX %in% whee3$tip.label),]
+daterch0.noNA.matched <- daterch0.noNA[(
+    daterch0.noNA$indX %in% whee3$tip.label),]
 
 # what is lost?
 daterch0.warmonly.noNA$indX[!daterch0.warmonly.noNA$indX 
@@ -187,13 +190,18 @@ Lmat <- matrix(rep(1), nrow = nrow(vcv.whee3mat), ncol = ncol(vcv.whee3mat))
 diag(Lmat) <- 0
 
 ## build up data for stan model
-N <- nrow(daterch0.warmonly.noNA.matched)
-X <- as.vector(daterch0.warmonly.noNA.matched$warm)
+N <- nrow(daterch0.noNA.matched)
+X1 <- as.vector(daterch0.noNA.matched$warm)
+X2 <- as.vector(daterch0.noNA.matched$photo)
+X1[X1==15] <- 0
+X1[X1==20] <- 1
+X2[X2==8] <- 0
+X2[X2==12] <- 1
 K <- 1
 V <- vcv.whee3
-y <- as.vector(daterch0.warmonly.noNA.matched$lday)
+y <- as.vector(daterch0.noNA.matched$lday)
 
-fit.bayes.pgls <- stan("stan/pgls_lemoine.stan", data=c("N","X", "K", "Lmat", "V", "y"), iter=2000, chains=4)
+fit.bayes.pgls <- stan("stan/pgls_budtiss.stan", data=c("N","X1", "X2", "K", "Lmat", "V", "y"), iter=2000, chains=4)
 launch_shinystan(fit.bayes.pgls)
 
 fit.bayes.pgls
